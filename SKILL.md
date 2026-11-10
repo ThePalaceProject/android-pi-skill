@@ -10,8 +10,7 @@ projects. It is not for scaffolding new projects.
 
 PalaceProject Android projects are **Kotlin + Gradle** (with the Android
 Gradle Plugin). A few related PalaceProject projects are plain Kotlin +
-Maven. The build/format commands below cover both; the Kotlin style rules
-apply to both.
+Maven; the style rules below apply to those as well.
 
 ## Detect that you are in a PalaceProject project
 
@@ -56,8 +55,7 @@ ktlint do it.
 The ktlint *check* task is `./gradlew ktlintCheck`; it is wired into the
 build (when `org.thepalaceproject.build.enableKtLint=true` in
 `gradle.properties`, the `clean` task depends on `ktlintCheck`), so a normal
-build already gates on style. You do not need to run it separately unless
-asked.
+build already gates on style.
 
 ### Always log build output to a file
 
@@ -117,10 +115,9 @@ even if a rule you are enabling "needs" them:
 - **`ktlint_code_style = intellij_idea`** — do not set it. Leave the code
   style unset (the default `ktlint_official`). Under `intellij_idea`,
   ktlint's `function-signature` autocorrect collapses multi-line function
-  signatures onto a single line whenever they fit the line limit — the
-  opposite of how this codebase writes signatures (see the house style
-  section below) — and it rewrites every affected signature in the tree at
-  once.
+  signatures onto a single line whenever they fit the line limit. That is
+  the opposite of how this codebase writes signatures, and it rewrites
+  every affected signature in the tree at once.
 - **`ktlint_function_signature_rule_force_multiline_when_parameter_count_greater_or_equal_than`** —
   do not set it. It makes the signature rules rewrite function signatures
   across the tree.
@@ -146,27 +143,25 @@ disabled for a reason that is visible in the code:
   as snake_case to mirror the wire format.
 - **`package-name`** — legacy packages predate the current naming scheme.
 
-If a disabled rule is genuinely in the way for a new file, stop and ask.
+If a disabled rule is in the way for a new file, stop and ask.
 
 ## House code style: verbose and explicit
 
-The house style is **verbose and explicit**, never terse. Where a choice is
-between a compact form and an explicit form, the explicit form wins. ktlint
-enforces the rules it can check automatically; the following are conventions
-that no linter rule checks — they are enforced by review:
+Where a choice exists between a compact form and an explicit form, the
+explicit form wins. ktlint enforces the rules it can check automatically;
+the following conventions no linter rule checks, and they are enforced by
+review:
 
-1. **No elvis operator (`?:`) in new code.** The idiomatic Kotlin
-   `val x = f() ?: default` / `f() ?: return` is banned. Write the null
-   check as a block:
+1. **No elvis operator (`?:`).** Do not use it. When touching a line that
+   uses it, rewrite it in the block form:
    ```kotlin
    val x = f()
    if (x == null) {
      return
    }
    ```
-   Rationale: `?:` fuses a value computation and a control-flow decision
-   into one expression, which is exactly the compactness the house style
-   rejects.
+   Why: `?:` fuses a value computation and a control-flow decision into a
+   single expression.
 
 2. **No `?: return` / `?: return null` early-outs.** Use the block form
    from rule 1 instead.
@@ -174,11 +169,11 @@ that no linter rule checks — they are enforced by review:
 3. **No one-line if-else expressions** (the "ternary" form
    `val x = if (c) a else b`). Use a block:
    ```kotlin
-   val x
+   var chosen: String
    if (c) {
-     x = a
+     chosen = a
    } else {
-     x = b
+     chosen = b
    }
    ```
    or `return` from each branch where the structure allows it.
@@ -198,9 +193,8 @@ that no linter rule checks — they are enforced by review:
 
 7. **`max_line_length = 120`.** If a line cannot be wrapped by the
    formatter (a long import, a long string literal, a long call argument),
-   extract
-   a local `val`, qualify a shorter import, or split the string — do not
-   disable the limit locally and do not leave the line long.
+   extract a local `val`, qualify a shorter import, or split the string.
+   Do not suppress the limit.
 
 8. **Trailing commas** at call sites and declaration sites are part of the
    enforced style (including in `when` condition lists).
