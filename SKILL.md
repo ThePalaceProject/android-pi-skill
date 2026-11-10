@@ -1,6 +1,6 @@
 ---
 name: palace-android
-description: Conventions and build guardrails for PalaceProject (org.thepalaceproject) Android/Kotlin projects. Use when working on, editing, or building any project whose gradle.properties declares a GROUP containing org.thepalaceproject, or whose pom.xml has a groupId containing org.thepalaceproject. Covers the only permitted build and format commands, where the enforced ktlint rules live (and the .editorconfig settings you must not introduce), the house Kotlin code style, and the explicitness conventions ktlint cannot lint.
+description: Conventions and build guardrails for PalaceProject (org.thepalaceproject) Android/Kotlin projects. Use when working on, editing, or building any project whose gradle.properties declares a GROUP containing org.thepalaceproject, or whose pom.xml has a groupId containing org.thepalaceproject. Covers the only permitted build and format commands, where the enforced ktlint rules live (and the .editorconfig settings you must not introduce), the house Kotlin code style, and the style conventions no linter checks.
 ---
 
 # PalaceProject android conventions
@@ -19,7 +19,7 @@ You are in a PalaceProject project if **any** of these hold:
 
 - the root `gradle.properties` has a `GROUP` property whose value contains
   `org.thepalaceproject` (e.g. `GROUP=org.thepalaceproject`,
-  `GROUP=org.thepalaceproject.android.xxx`)
+  `GROUP=org.thepalaceproject.audiobook`)
 - the root `pom.xml` has a `groupId` containing `org.thepalaceproject`
 
 ## Build commands — hard rules
@@ -102,8 +102,8 @@ repository root **`.editorconfig`**. ktlint reads it. The ktlint version is
 pinned by the build convention (currently 1.8.0, in the
 `palace-build-conventions` submodule via the `org.thepalaceproject.ktlint`
 plugin) — do not run a downloaded or system ktlint binary of a different
-version against the tree; the rulesets differ and the results are
-meaningless.
+version against the tree; the results will not match what the
+build enforces.
 
 **Do not restate the rule list from memory.** When in doubt about what is
 enforced, read the repository's `.editorconfig`. When in doubt about what a
@@ -118,21 +118,26 @@ even if a rule you are enabling "needs" them:
   style unset (the default `ktlint_official`). Under `intellij_idea`,
   ktlint's `function-signature` autocorrect collapses multi-line function
   signatures onto a single line whenever they fit the line limit — the
-  opposite of the house style, and it hits hundreds of signatures at once.
+  opposite of how this codebase writes signatures (see the house style
+  section below) — and it rewrites every affected signature in the tree at
+  once.
 - **`ktlint_function_signature_rule_force_multiline_when_parameter_count_greater_or_equal_than`** —
-  do not set it. It interacts with the signature rules in ways that rewrite
-  signatures across the tree.
-- **`ktlint_standard_chain-wrapping`** — do not enable it. It forbids the
-  leading-operator chain style the codebase uses.
+  do not set it. It makes the signature rules rewrite function signatures
+  across the tree.
+- **`ktlint_standard_chain-wrapping`** — do not enable it. It forbids
+  method chains whose continuation lines begin with the operator (for
+  example, a line starting with `.`); that is how this codebase writes
+  chains.
 
 ### Rules intentionally disabled (and why — do not "helpfully" enable them)
 
 The `.editorconfig` disables a small set of ktlint rules. Each one is
 disabled for a reason that is visible in the code:
 
-- **`function-expression-body`** — would force single-expression functions
-  from block bodies to expression bodies (golf). The house style is
-  explicit: block bodies with a `return`.
+- **`function-expression-body`** — would force functions with a
+  single-expression body to be written as expression bodies
+  (`fun f() = ...`) instead of block bodies (`fun f() { return ... }`).
+  The house style is explicit: block bodies with a `return`.
 - **`class-naming`** / **`function-naming`** — protocol-version types and
   functions are named after the protocol version they implement (e.g.
   `SerializedBookmark20210828`, `OPDS1.2...`). These are deliberate.
@@ -143,12 +148,12 @@ disabled for a reason that is visible in the code:
 
 If a disabled rule is genuinely in the way for a new file, stop and ask.
 
-## House code style: explicit, not golf
+## House code style: verbose and explicit
 
-The house style is **verbose and explicit** (Ada-like), not terse. Where a
-choice is between a compact form and an explicit form, the explicit form
-wins. ktlint enforces the mechanical subset; the following are conventions
-enforced by review, not by any linter rule:
+The house style is **verbose and explicit**, never terse. Where a choice is
+between a compact form and an explicit form, the explicit form wins. ktlint
+enforces the rules it can check automatically; the following are conventions
+that no linter rule checks — they are enforced by review:
 
 1. **No elvis operator (`?:`) in new code.** The idiomatic Kotlin
    `val x = f() ?: default` / `f() ?: return` is banned. Write the null
@@ -163,9 +168,8 @@ enforced by review, not by any linter rule:
    into one expression, which is exactly the compactness the house style
    rejects.
 
-2. **No `?: return` / `?: return null` early-outs.** Migrate to the block
-   form above. (The existing tree was already migrated; do not
-   reintroduce the pattern.)
+2. **No `?: return` / `?: return null` early-outs.** Use the block form
+   from rule 1 instead.
 
 3. **No one-line if-else expressions** (the "ternary" form
    `val x = if (c) a else b`). Use a block:
@@ -180,22 +184,21 @@ enforced by review, not by any linter rule:
    or `return` from each branch where the structure allows it.
 
 4. **No braceless single-statement `if`s.** `if (x) return` is banned;
-   `if (x) { return }` (or the multi-line form) is required. ktlint's
-   `if-else-bracing` and `when-entry-bracing` enforce the mechanical
-   subset; keep `when` branches braced even where ktlint would not
-   require it.
+   `if (x) { return }` is required. ktlint's `if-else-bracing` and
+   `when-entry-bracing` rules check part of this automatically; in addition,
+   keep `when` branches braced even where ktlint would not require it.
 
 5. **Function signatures.** 3 or more parameters: one parameter per line.
-   1 or 2 parameters: a single line (this is the dominant existing form;
-   the formatter enforces it against `max_line_length = 120`). Do not
-   hand-wrap 1- or 2-parameter signatures — that is the minority form and
-   `ktlintFormat` will collapse them.
+   1 or 2 parameters: a single line. Do not hand-wrap a 1- or 2-parameter
+   signature across multiple lines; `ktlintFormat` will collapse it back
+   onto one line.
 
 6. **No star imports** (the `.editorconfig` sets the star-import threshold
    to a value that disables them).
 
-7. **`max_line_length = 120`.** If a line cannot be wrapped mechanically
-   (a long import, a long string literal, a long call argument), extract
+7. **`max_line_length = 120`.** If a line cannot be wrapped by the
+   formatter (a long import, a long string literal, a long call argument),
+   extract
    a local `val`, qualify a shorter import, or split the string — do not
    disable the limit locally and do not leave the line long.
 
@@ -240,7 +243,7 @@ enforced by review, not by any linter rule:
 3. Run `./gradlew clean assemble test > <the log file> 2>&1` (Maven
    projects: `mvn clean verify`), then inspect the log file.
 4. Fix the errors the log names; re-run until green. If style violations
-   are reported, run `./gradlew ktlintFormat` first — the mechanical
-   subset is auto-corrected in place — then re-run the build. A wrong
+   are reported, run `./gradlew ktlintFormat` first — it fixes the
+   violations it can fix automatically — then re-run the build. A wrong
    `grep` pattern is fixed by re-grepping the log, never by re-running the
    build.
