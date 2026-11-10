@@ -210,11 +210,18 @@ that no linter rule checks — they are enforced by review:
 ## Project layout facts
 
 - The repository is a composite build: the root project plus the
-  `palace-*` modules, plus the `palace-build-conventions` **git submodule**
-  (the build-logic: `PalaceKtLint.kt`, `PalaceProjectProperties.kt`, and
-  the `org.thepalaceproject.ktlint` plugin). A `git checkout` in the
-  parent repository does **not** touch the submodule's working tree;
-  changes inside it must be committed inside the submodule.
+  `palace-*` modules.
+- **Submodules: never edit their contents.** `org.thepalaceproject.android.platform`,
+  `.ci`, and `palace-build-conventions` are git submodules present in almost
+  every PalaceProject android repository (the Android platform libraries, the
+  CI scripts, and the build-logic including `PalaceKtLint.kt` /
+  `PalaceProjectProperties.kt` and the `org.thepalaceproject.ktlint` plugin,
+  respectively). If something inside a submodule needs to change, **stop and
+  tell the user**; the edit is made in the submodule's own repository, and the
+  submodule pointer in the parent is then updated separately. Do not edit
+  files inside a submodule and do not commit a changed submodule pointer as
+  part of your changes — a dirty or bumped submodule in `git status` is a
+  dependency update, not a source change.
 - Build parameters live in the root `gradle.properties` under
   `org.thepalaceproject.build.*` (SDK levels, JDK build/bytecode targets,
   `enableKtLint`, …) and in the `GROUP` / `POM_*` properties.
