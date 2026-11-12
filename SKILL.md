@@ -10,7 +10,8 @@ projects. It is not for scaffolding new projects.
 
 PalaceProject Android projects are **Kotlin + Gradle** (with the Android
 Gradle Plugin). A few related PalaceProject projects are plain Kotlin +
-Maven; the style rules below apply to those as well.
+Maven. The build/format commands below cover both; the Kotlin style rules
+apply to both.
 
 ## Detect that you are in a PalaceProject project
 
@@ -55,7 +56,8 @@ ktlint do it.
 The ktlint *check* task is `./gradlew ktlintCheck`; it is wired into the
 build (when `org.thepalaceproject.build.enableKtLint=true` in
 `gradle.properties`, the `clean` task depends on `ktlintCheck`), so a normal
-build already gates on style.
+build already gates on style. You do not need to run it separately unless
+asked.
 
 ### Always log build output to a file
 
@@ -115,9 +117,10 @@ even if a rule you are enabling "needs" them:
 - **`ktlint_code_style = intellij_idea`** — do not set it. Leave the code
   style unset (the default `ktlint_official`). Under `intellij_idea`,
   ktlint's `function-signature` autocorrect collapses multi-line function
-  signatures onto a single line whenever they fit the line limit. That is
-  the opposite of how this codebase writes signatures, and it rewrites
-  every affected signature in the tree at once.
+  signatures onto a single line whenever they fit the line limit — the
+  opposite of how this codebase writes signatures (see the house style
+  section below) — and it rewrites every affected signature in the tree at
+  once.
 - **`ktlint_function_signature_rule_force_multiline_when_parameter_count_greater_or_equal_than`** —
   do not set it. It makes the signature rules rewrite function signatures
   across the tree.
@@ -143,25 +146,27 @@ disabled for a reason that is visible in the code:
   as snake_case to mirror the wire format.
 - **`package-name`** — legacy packages predate the current naming scheme.
 
-If a disabled rule is in the way for a new file, stop and ask.
+If a disabled rule is genuinely in the way for a new file, stop and ask.
 
 ## House code style: verbose and explicit
 
-Where a choice exists between a compact form and an explicit form, the
-explicit form wins. ktlint enforces the rules it can check automatically;
-the following conventions no linter rule checks, and they are enforced by
-review:
+The house style is **verbose and explicit**, never terse. Where a choice is
+between a compact form and an explicit form, the explicit form wins. ktlint
+enforces the rules it can check automatically; the following are conventions
+that no linter rule checks — they are enforced by review:
 
-1. **No elvis operator (`?:`).** Do not use it. When touching a line that
-   uses it, rewrite it in the block form:
+1. **No elvis operator (`?:`) in new code.** The idiomatic Kotlin
+   `val x = f() ?: default` / `f() ?: return` is banned. Write the null
+   check as a block:
    ```kotlin
    val x = f()
    if (x == null) {
      return
    }
    ```
-   Why: `?:` fuses a value computation and a control-flow decision into a
-   single expression.
+   Rationale: `?:` fuses a value computation and a control-flow decision
+   into one expression, which is exactly the compactness the house style
+   rejects.
 
 2. **No `?: return` / `?: return null` early-outs.** Use the block form
    from rule 1 instead.
@@ -169,11 +174,11 @@ review:
 3. **No one-line if-else expressions** (the "ternary" form
    `val x = if (c) a else b`). Use a block:
    ```kotlin
-   var chosen: String
+   val x
    if (c) {
-     chosen = a
+     x = a
    } else {
-     chosen = b
+     x = b
    }
    ```
    or `return` from each branch where the structure allows it.
@@ -193,29 +198,41 @@ review:
 
 7. **`max_line_length = 120`.** If a line cannot be wrapped by the
    formatter (a long import, a long string literal, a long call argument),
-   extract a local `val`, qualify a shorter import, or split the string.
-   Do not suppress the limit.
+   extract
+   a local `val`, qualify a shorter import, or split the string — do not
+   disable the limit locally and do not leave the line long.
 
 8. **Trailing commas** at call sites and declaration sites are part of the
    enforced style (including in `when` condition lists).
 
 9. **Indentation:** 2 spaces in `.kt` files, 4 spaces in `.kts` files.
 
+10. **No extension functions.** `fun String.trimTrailing()` and
+    `fun Collection<T>.firstNonNull()` are banned, whether top-level or
+    declared inside a class. Write an ordinary function that takes the
+    would-be receiver as a named first parameter instead:
+    ```kotlin
+    fun trimTrailing(receiver: String): String
+    ```
+    (Extension properties — `val String.lastChar` — are banned by the same
+    rule; use a named function or an ordinary property.)
+    Rationale: an extension function is resolved by import rather than by
+    the receiver's type, so the receiver argument is invisible in the call
+    site's parameter list and the resolution is determined by which file
+    imports it — the hidden coupling the house style rejects. ktlint has
+    no standard rule that detects this; it is enforced by review.
+
+11. **No top-level functions.** A `fun` declared at file scope is banned.
+    Put the function in a class as a member function.
+
 ## Project layout facts
 
 - The repository is a composite build: the root project plus the
-  `palace-*` modules.
-- **Submodules: never edit their contents.** `org.thepalaceproject.android.platform`,
-  `.ci`, and `palace-build-conventions` are git submodules present in almost
-  every PalaceProject android repository (the Android platform libraries, the
-  CI scripts, and the build-logic including `PalaceKtLint.kt` /
-  `PalaceProjectProperties.kt` and the `org.thepalaceproject.ktlint` plugin,
-  respectively). If something inside a submodule needs to change, **stop and
-  tell the user**; the edit is made in the submodule's own repository, and the
-  submodule pointer in the parent is then updated separately. Do not edit
-  files inside a submodule and do not commit a changed submodule pointer as
-  part of your changes — a dirty or bumped submodule in `git status` is a
-  dependency update, not a source change.
+  `palace-*` modules, plus the `palace-build-conventions` **git submodule**
+  (the build-logic: `PalaceKtLint.kt`, `PalaceProjectProperties.kt`, and
+  the `org.thepalaceproject.ktlint` plugin). A `git checkout` in the
+  parent repository does **not** touch the submodule's working tree;
+  changes inside it must be committed inside the submodule.
 - Build parameters live in the root `gradle.properties` under
   `org.thepalaceproject.build.*` (SDK levels, JDK build/bytecode targets,
   `enableKtLint`, …) and in the `GROUP` / `POM_*` properties.
