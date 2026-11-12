@@ -1,7 +1,6 @@
 ---
 name: palace-android
-description: Conventions and build guardrails for PalaceProject (org.thepalaceproject) Android/Kotlin projects. Use when working on, editing, or building any project whose gradle.properties declares a GROUP containing org.thepalaceproject, or whose pom.xml has a groupId containing org.thepalaceproject. Covers the only permitted build and format commands, where the enforced ktlint rules live (and the .editorconfig settings you must not introduce), the house Kotlin code style, the style conventions no linter checks, and
-the API/dependency preference (JVM over Android).
+description: Conventions and build guardrails for PalaceProject (org.thepalaceproject) Android/Kotlin projects. Use when working on, editing, or building any project whose gradle.properties declares a GROUP containing org.thepalaceproject, or whose pom.xml has a groupId containing org.thepalaceproject. Covers the only permitted build and format commands, where the enforced ktlint rules live (and the .editorconfig settings you must not introduce), the house Kotlin code style, the style conventions no linter checks, and the API/dependency preference (JVM over Android).
 ---
 
 # PalaceProject android conventions
