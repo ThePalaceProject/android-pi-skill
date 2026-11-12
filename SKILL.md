@@ -225,6 +225,13 @@ that no linter rule checks — they are enforced by review:
 11. **No top-level functions.** A `fun` declared at file scope is banned.
     Put the function in a class as a member function.
 
+12. **One class per file.** At most one class at file scope (the same
+    for `object`, `interface`, and `enum class` declarations). Nested
+    classes are fine — they are part of the enclosing declaration. ktlint
+    has no rule that detects a second top-level class in a file (its
+    `filename` rule only checks the file's name), so this is enforced by
+    review.
+
 ## Project layout facts
 
 - The repository is a composite build: the root project plus the
