@@ -1,6 +1,7 @@
 ---
 name: palace-android
-description: Conventions and build guardrails for PalaceProject (org.thepalaceproject) Android/Kotlin projects. Use when working on, editing, or building any project whose gradle.properties declares a GROUP containing org.thepalaceproject, or whose pom.xml has a groupId containing org.thepalaceproject. Covers the only permitted build and format commands, where the enforced ktlint rules live (and the .editorconfig settings you must not introduce), the house Kotlin code style, and the style conventions no linter checks.
+description: Conventions and build guardrails for PalaceProject (org.thepalaceproject) Android/Kotlin projects. Use when working on, editing, or building any project whose gradle.properties declares a GROUP containing org.thepalaceproject, or whose pom.xml has a groupId containing org.thepalaceproject. Covers the only permitted build and format commands, where the enforced ktlint rules live (and the .editorconfig settings you must not introduce), the house Kotlin code style, the style conventions no linter checks, and
+the API/dependency preference (JVM over Android).
 ---
 
 # PalaceProject android conventions
@@ -231,6 +232,20 @@ that no linter rule checks — they are enforced by review:
     has no rule that detects a second top-level class in a file (its
     `filename` rule only checks the file's name), so this is enforced by
     review.
+
+## API and dependency preference: JVM over Android
+
+Prefer standard JVM libraries and well-tested, mature, well-maintained
+third-party Java libraries over their Android-specific equivalents:
+
+- **Avoid Android platform APIs.** Unless Google absolutely mandates the
+  use of a particular API, avoid it. Android APIs cannot be trusted to
+  work as documented, to stay working over time, or not to be
+  unceremoniously deprecated, forcing rewrites of the parts of the
+  application that use them. Prefer standard JVM libraries.
+- **Avoid Android-specific third-party libraries.** Use well-tested,
+  mature, well-maintained third-party Java libraries instead; the
+  Android-specific ones get abandoned after a year.
 
 ## Project layout facts
 
